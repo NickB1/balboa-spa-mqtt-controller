@@ -10,9 +10,9 @@ volatile uint32_t balboa_controller_clock_cycle_cnt = 0, balboa_controller_clock
 
 
 //Function declarations
-extern void          ICACHE_RAM_ATTR   isr_0(void);
-//extern void          ICACHE_RAM_ATTR   isr_1(void);
-extern uint8_t       ICACHE_RAM_ATTR   balboa_controller_comm(uint8_t reset_routine);
+extern void          IRAM_ATTR   isr_0(void);
+//extern void          IRAM_ATTR   isr_1(void);
+extern uint8_t       IRAM_ATTR   balboa_controller_comm(uint8_t reset_routine);
 
 //Initialisation
 
@@ -57,7 +57,7 @@ void balboa_interface_init(void)
 
 //ISR routines
 
-extern void ICACHE_RAM_ATTR isr_0(void)
+extern void IRAM_ATTR isr_0(void)
 {
   //__digitalWrite(Debug_Pin_0, HIGH);
   balboa_controller_done = balboa_controller_comm(false);
@@ -244,9 +244,9 @@ void balboa_controller_send_button(uint8_t buttons)
   bbdata_controller.buttons = buttons;
 }
 
-extern uint8_t ICACHE_RAM_ATTR  balboa_controller_comm(uint8_t reset_routine)
+extern uint8_t IRAM_ATTR  balboa_controller_comm(uint8_t reset_routine)
 {
-  static uint8_t    bit_cntr = 0, byte_cntr = 0, bit_data = 0, data = 0, data_write_holdoff = 0, newdata = 0, button_data = 0, button_send_data = 0, button_data_repeats = 0;
+  static uint8_t    bit_cntr = 0, byte_cntr = 0, bit_data = 0, data = 0, data_write_holdoff = 0, newdata = 0, button_send_data = 0, button_data_repeats = 0;
   static uint32_t   cyclecount_now = 0, cyclecount_prv = 0;
 
   if (reset_routine) //Reset controller_comm routine when controller_timeout_ms of no interrupts has passed
@@ -296,7 +296,7 @@ extern uint8_t ICACHE_RAM_ATTR  balboa_controller_comm(uint8_t reset_routine)
 
   //Set low at 5th byte
 
-  if ((byte_cntr >= (Byte_Count - 2)) && (bit_cntr >= 0))
+  if (byte_cntr >= (Byte_Count - 2))
   {
     __digitalWrite(Controller_Button_Data_Pin_o, 0);
   }
@@ -361,7 +361,6 @@ extern uint8_t ICACHE_RAM_ATTR  balboa_controller_comm(uint8_t reset_routine)
         if (bbdata_controller.buttons != 0)
         {
           button_send_data = 1;
-          button_data = bbdata_controller.buttons;
         }
       }
       else
@@ -370,7 +369,6 @@ extern uint8_t ICACHE_RAM_ATTR  balboa_controller_comm(uint8_t reset_routine)
         {
           button_send_data = 0;
           button_data_repeats = 0;
-          button_data = 0;
           bbdata_controller.buttons = 0;
         }
       }
@@ -465,7 +463,7 @@ void balboa_display_send_data(uint8_t data[], uint8_t holdoff_s)
 void balboa_display_poll(void)
 {
   static uint8_t idle = 0;
-  static unsigned long time_now = 0, time_prv = 0, time_poll = 0;
+  static unsigned long time_now = 0, time_prv = 0; //time_poll = 0;
 
   time_now = millis();
 
@@ -481,7 +479,7 @@ void balboa_display_poll(void)
   {
     /*if ((time_now - time_poll) > 1)
       {*/
-    time_poll = millis();
+    //time_poll = millis();
     if (balboa_display_comm(true, Display_Data_Pin_o, Display_Button_Data_Pin_i, Display_Clock_Pin_o))
     {
       balboa_display_done = 1;
@@ -573,7 +571,7 @@ extern uint8_t balboa_display_comm(uint8_t start, uint8_t data_pin_o, uint8_t bu
 
 //Helper Functions
 
-extern uint8_t ICACHE_RAM_ATTR write_byte_bit(uint8_t* write_byte, uint8_t write_bit, uint8_t bit_location)
+extern uint8_t IRAM_ATTR write_byte_bit(uint8_t* write_byte, uint8_t write_bit, uint8_t bit_location)
 {
   uint8_t temp;
 
@@ -587,17 +585,19 @@ extern uint8_t ICACHE_RAM_ATTR write_byte_bit(uint8_t* write_byte, uint8_t write
     temp = ~temp;
     *write_byte = *write_byte & temp;
   }
+  return 0;
 }
 
 char sevenseg_to_char(uint8_t data)
 {
-  for (int i = 16; i < sizeof(SevenSegmentASCII); i++) //Skip signs
+  for (uint16_t i = 16; i < sizeof(SevenSegmentASCII); i++) //Skip signs
   {
     if (data == SevenSegmentASCII[i])
     {
       return (char) (i + 0x20);
     }
   }
+  return 0;
 }
 
 String string_to_sevenseg(String string, int string_length)

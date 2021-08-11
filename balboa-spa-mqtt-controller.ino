@@ -10,9 +10,9 @@ extern volatile uint8_t balboa_controller_bit_skipped;
 
 //Function declarations
 
-extern void          ICACHE_RAM_ATTR __digitalWrite(uint8_t pin, uint8_t val);
-extern int           ICACHE_RAM_ATTR __digitalRead(uint8_t pin);
-extern uint8_t       ICACHE_RAM_ATTR   write_byte_bit(uint8_t* write_byte, uint8_t write_bit, uint8_t bit_location);
+extern void          IRAM_ATTR __digitalWrite(uint8_t pin, uint8_t val);
+extern int           IRAM_ATTR __digitalRead(uint8_t pin);
+extern uint8_t       IRAM_ATTR   write_byte_bit(uint8_t* write_byte, uint8_t write_bit, uint8_t bit_location);
 
 void setup()
 {
@@ -36,7 +36,7 @@ void loop()
   balboa_button_press_sequencer(false, 0, 0);
   balboa_data_process();
 
-  mqtt_loop();
+  //mqtt_loop();
 }
 
 //Serial Debug
@@ -214,7 +214,7 @@ void serial_print_error_codes(String string_array[][2], int array_length)
 
 //Helper Functions
 
-extern void ICACHE_RAM_ATTR __digitalWrite(uint8_t pin, uint8_t val) {
+extern void IRAM_ATTR __digitalWrite(uint8_t pin, uint8_t val) {
   //pwm_stop_pin(pin);
   if (pin < 16) {
     if (val) GPOS = (1 << pin);
@@ -225,7 +225,7 @@ extern void ICACHE_RAM_ATTR __digitalWrite(uint8_t pin, uint8_t val) {
   }
 }
 
-extern int ICACHE_RAM_ATTR __digitalRead(uint8_t pin) {
+extern int IRAM_ATTR __digitalRead(uint8_t pin) {
   //pwm_stop_pin(pin);
   if (pin < 16) {
     return GPIP(pin);
